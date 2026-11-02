@@ -1,0 +1,28 @@
+services:
+  lau6-cr:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: cr.lau6code.com/lau6code/lau6-cr:v1.0.0
+    container_name: lau6-cr
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      # 打开 http://<host>:5000/setup                  # 网页引导
+      CR_PUBLIC_URL: "${CR_PUBLIC_URL:-}"
+      CR_CLEANUP_GC_ENABLED: true
+      # 试运行：只报告能回收多少，不真删。改成 false 才真正释放磁盘。
+      CR_CLEANUP_GC_DRY_RUN: false
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:5000/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: { max-size: "50m", max-file: "5" }
+

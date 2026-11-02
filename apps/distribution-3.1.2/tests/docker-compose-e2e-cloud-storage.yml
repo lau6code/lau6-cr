@@ -1,0 +1,63 @@
+services:
+  minio:
+    image: docker.io/chainguard/minio:latest@sha256:22bf0ad174612a0106dfbbb95818f307525dd32c5a6ec119ecd7273815abe456
+    # Compose creates the bind-mounted data directory as root on CI runners.
+    user: "0:0"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD-SHELL", "MC_HOST_local=http://$${MINIO_ROOT_USER}:$${MINIO_ROOT_PASSWORD}@localhost:9000 /usr/bin/mc ready local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: distribution
+      MINIO_ROOT_PASSWORD: password
+    volumes:
+      - ./miniodata/distribution:/data:Z
+
+  minio-init:
+    image: docker.io/chainguard/minio-client:latest@sha256:ff313058c290a4519b86db9362386d18214583b86ea35f6891038e1061dc3e12
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/bash -c "
+        /usr/bin/mc alias set minio http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} && (
+          /usr/bin/mc stat minio/images-local || /usr/bin/mc mb minio/images-local
+        ) && /usr/bin/mc anonymous set public minio/images-local"
+    environment:
+      MINIO_ROOT_USER: distribution
+      MINIO_ROOT_PASSWORD: password
+
+  redis:
+    image: redis:7.2-alpine
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    ports:
+      - "6379:6379"
+
+  registry:
+    build:
+      context: ../.
+      dockerfile: ./Dockerfile
+    command:
+      - "serve"
+      - "/etc/distribution/config-test.yml"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/debug/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    volumes:
+      - ./conf-e2e-cloud-storage.yml:/etc/distribution/config-test.yml

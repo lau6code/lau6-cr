@@ -1,0 +1,58 @@
+# ── Go ──────────────────────────────────────────────
+/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# ── 前端 ────────────────────────────────────────────
+node_modules/
+apps/web/dist/
+apps/web/.vite/
+*.local
+
+# ── 前端嵌入产物（apps/api/internal/web/dist）──────
+# 真实构建产物忽略；占位文件（.gitkeep / placeholder/index.html）**保留在版本库里**，
+# 否则干净 checkout 编译不过——go:embed 要求嵌入目录存在且非空。
+apps/api/internal/web/dist/assets/
+apps/api/internal/web/dist/index.html
+apps/api/internal/web/dist/*
+!apps/api/internal/web/dist/.gitkeep
+!apps/api/internal/web/dist/placeholder/
+
+# ── 运行时数据 ──────────────────────────────────────
+# 容器里的 /data 在本地开发时也会生成，别误提交
+/data/
+/tmp/
+*.db
+*.db-wal
+*.db-shm
+*.pem
+*.key
+jwt-jwks.json
+webhook-secret
+registry-secret
+setup-token
+
+# ── 环境与密钥 ──────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── IDE / OS ────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── 本地临时件 ──────────────────────────────────────
+# scripts/ 下只跟踪仓库自带的脚本（冒烟测试、语言包校验）；
+# 其余是本地临时脚本，别误提交
+# （临时脚本更推荐放 .dev-scratch/，它整个被忽略）
+/scripts/*
+!/scripts/smoke.sh
+!/scripts/check-i18n.mjs
+!/scripts/check-password-crypto.mjs
+!/scripts/check-settings-keys.mjs
+/.dev-scratch/

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" />
+    <!-- 标题由路由按当前语言重写（见 src/router/index.ts），
+         这里先留语言中性的品牌名，避免首屏给非中文用户闪一个中文标题。 -->
+    <title>lau6-cr</title>
+    <script>
+      /*
+       * 在首屏绘制**之前**把主题与语言落到 <html> 上。
+       *
+       * ⚠️ 为什么不能等 Vue 挂载后再做：
+       *    挂载前浏览器已经画了一帧浅色背景，暗夜用户会看到一闪的白屏。
+       *    这里读同一份 localStorage（键名与 src/stores/theme.ts、
+       *    src/i18n/locale.ts 一致），把 <html> 的类名与 lang 先定下来。
+       */
+      ;(function () {
+        try {
+          var theme = localStorage.getItem('lau6-cr.theme') || 'system'
+          var dark =
+            theme === 'dark' ||
+            (theme === 'system' &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (dark) document.documentElement.classList.add('dark')
+
+          var locale = localStorage.getItem('lau6-cr.locale')
+          if (locale) {
+            document.documentElement.setAttribute('lang', locale)
+          } else {
+            var lang = (window.navigator.language || 'zh-CN').toLowerCase()
+            if (lang.indexOf('zh') === 0) {
+              var trad = /hant|tw|hk|mo/.test(lang)
+              document.documentElement.setAttribute('lang', trad ? 'zh-TW' : 'zh-CN')
+            } else if (lang.indexOf('en') === 0) {
+              document.documentElement.setAttribute('lang', 'en')
+            }
+          }
+        } catch (e) {
+          /* 存不了就按默认走：浅色 + 简体中文。 */
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

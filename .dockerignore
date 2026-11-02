@@ -1,0 +1,32 @@
+# 构建上下文瘦身
+#
+# 构建上下文是**仓库根**（compose 里 context: .），所以这个文件必须在根目录。
+# 不排除这些东西会让每次 docker build 都传输几十 MB 的无用内容。
+
+# 版本控制与 IDE
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+
+# 构建产物（镜像里由 Dockerfile 重新生成）
+bin/
+node_modules/
+**/node_modules/
+apps/web/dist/
+apps/api/internal/web/dist/
+
+# 文档与脚本（运行时不需要）
+docs/
+scripts/
+
+# 环境与密钥（绝不能进镜像）
+.env
+.env.*
+*.pem
+*.key
+jwt-jwks.json
+webhook-secret
+registry-secret
+setup-token
